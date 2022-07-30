@@ -1,0 +1,6 @@
+nextcord
+python-dotenv
+dateparser
+cchardet
+aiodns
+orjson
