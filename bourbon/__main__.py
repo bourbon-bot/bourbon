@@ -713,13 +713,12 @@ class Bourbon(commands.Bot):
             )
         if isinstance(exception, commands.BotMissingPermissions):
             await ctx.send(
-                "I am missing some permissions!" + 
-                self._format_missing_permissions_codeblock(
+                "I am missing some permissions!"
+                + self._format_missing_permissions_codeblock(
                     exception.missing_permissions
                 )
             )
         super().on_command_error(ctx, exception)
-        
 
 
 bourbon = Bourbon()
