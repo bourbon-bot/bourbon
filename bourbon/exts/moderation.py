@@ -667,7 +667,6 @@ from typing import TYPE_CHECKING
 
 from nextcord.ext import commands, application_checks as checks
 from nextcord import User, slash_command, SlashOption
-from setuptools import SetuptoolsDeprecationWarning
 from helpers.flags import BaseFlag
 from helpers.converters import TimeConverter
 from datetime import timedelta
