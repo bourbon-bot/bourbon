@@ -697,21 +697,21 @@ class Bourbon(commands.Bot):
         return """```{}```""".format("\n".join(missing_perms))
 
     async def on_command_error(self: Self, ctx: Context, exception: E) -> None:
-        if isinstance(exception, commands.NoPrivateMessage):
+        if isinstance(exception, commands.NoPrivateMessage):  # type: ignore
             await ctx.send("This can't be used in private messages.")
-        if isinstance(exception, HTTPException):
+        if isinstance(exception, HTTPException):  # type: ignore
             await ctx.send(
                 "You messed up with the bot. An error was occured. Good job."
             )
             await super().on_command_error(ctx, exception)
-        if isinstance(exception, commands.MissingPermissions):
+        if isinstance(exception, commands.MissingPermissions):  # type: ignore
             await ctx.send(
                 "You are missing some permissions!"
                 + self._format_missing_permissions_codeblock(
                     exception.missing_permissions
                 )
             )
-        if isinstance(exception, commands.BotMissingPermissions):
+        if isinstance(exception, commands.BotMissingPermissions):  # type: ignore
             await ctx.send(
                 "I am missing some permissions!"
                 + self._format_missing_permissions_codeblock(

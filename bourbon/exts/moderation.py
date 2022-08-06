@@ -667,12 +667,13 @@ from typing import TYPE_CHECKING
 
 from nextcord.ext import commands, application_checks as checks
 from nextcord import User, slash_command, SlashOption
+from setuptools import SetuptoolsDeprecationWarning
 from helpers.flags import BaseFlag
 from helpers.converters import TimeConverter
 from datetime import timedelta
 
 if TYPE_CHECKING:
-    from typing import Union, Optional
+    from typing import Union, Optional, Callable
     from bourbon.__main__ import Bourbon
     from bourbon.typehint import Context, Self
     from nextcord import Member, Interaction
@@ -693,7 +694,7 @@ class BanFlag(BaseModerationFlag):
 
 class TimeoutFlag(BaseModerationFlag):
     until: Optional[str] = commands.flag(
-        name="until", default=lambda ctx: ctx.message.created_at + timedelta(hour=1)
+        name="until", default=lambda ctx: ctx.message.created_at + timedelta(hours=1)
     )
 
 
@@ -705,7 +706,7 @@ class Moderation(commands.Cog):
     _invoke_reason_with_uinput_reason = "Action done by {} (ID {}): {}"
     _bot_success_respond: str = "[OK] Action succeeded."
 
-    @slash_command()
+    @slash_command(dm_permission=False)
     async def moderation(self: Self, interaction: Interaction):
         """Moderation related commands."""
         pass
@@ -746,7 +747,7 @@ class Moderation(commands.Cog):
                 str(author), author.id, reason
             )
 
-    @moderation.subcommand(name="ban", dm_permission=False)
+    @moderation.subcommand(name="ban")
     @checks.bot_has_guild_permissions(ban_members=True)
     @checks.has_guild_permissions(ban_members=True)
     async def ban_slash(
@@ -762,15 +763,16 @@ class Moderation(commands.Cog):
             default=3,
         ),
     ):
+        """Ban a member from your server."""
         if not self._is_executable(
-            bot=interaction.guild.me, user=interaction.user, target=member
+            bot=interaction.guild.me, user=interaction.user, target=member  # type: ignore
         ):
             return await interaction.send(
                 "You or the bot's permission are not high enough to target this member."
             )
         reason = self._format_reason(interaction.user, reason)
-        await interaction.guild.ban(
-            member, reason=reason, delete_message_days=delete_message_days
+        await interaction.guild.ban(  # type: ignore
+            member, reason=reason, delete_message_days=delete_message_days  # type: ignore
         )
 
     @commands.command()
@@ -780,7 +782,7 @@ class Moderation(commands.Cog):
         self: Self, ctx: Context, member: commands.UserConverter, flags: BanFlag
     ) -> None:
         """Ban a member from your server. Your name and ID will be shown up on the audit log."""
-        if not self._is_executable(bot=ctx.guild.me, user=ctx.author, target=member):
+        if not self._is_executable(bot=ctx.guild.me, user=ctx.author, target=member):  # type: ignore
             return await ctx.send(
                 "You or the bot's permission are not high enough to target this member."
             )
@@ -800,13 +802,35 @@ class Moderation(commands.Cog):
         flags: BaseModerationFlag,
     ):
         """Kick a member from your server. Your name and ID will be shown up on the audit log."""
-        if not self._is_executable(bot=ctx.guild.me, user=ctx.author, target=member):
+        if not self._is_executable(bot=ctx.guild.me, user=ctx.author, target=member):  # type: ignore
             return await ctx.send(
                 "You or the bot's permission are not high enough to target this member."
             )
         reason = self._format_reason(ctx.author, flags.reason)
         await ctx.guild.kick(member, reason=reason)
         await ctx.send(self._bot_success_respond)
+
+    @moderation.subcommand(
+        name='kick'
+    )
+    @checks.bot_has_guild_permissions(kick_members=True)
+    @checks.has_guild_permissions(kick_members=True)
+    async def kick_slash(
+            self: Self,
+            interaction: Interaction,
+            member: Member = SlashOption(
+                description='The member to kick',
+                required=True
+            ),
+            reason: Optional[str] = SlashOption(
+                description='The reason to kick this member',
+                required=False
+            )
+    ):
+        if not self._is_executable(bot=interaction.guild.me, user=interaction.user, target=member):
+            return await interaction.send(
+                "You or ther bot's permissions are not high enough to target this member."
+            )
 
     @commands.command(aliases=["mute"])
     @commands.bot_has_guild_permissions(moderate_members=True)
@@ -849,7 +873,10 @@ class Moderation(commands.Cog):
         reason = self._format_reason(flags.reason)
         await ctx.guild.unban(member, reason=reason)
         await ctx.send(self._bot_success_respond)
+    
+    @classmethod
+    def add_cog_to_bot(cls: Moderation, bot: Bourbon) -> None:
+        bot.add_cog(cls(bot))
+        
 
-
-def setup(bot: Bourbon) -> None:
-    bot.add_cog(Moderation(bot))
+setup: Callable = Moderation.add_cog_to_bot
